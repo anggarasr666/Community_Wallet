@@ -24,7 +24,6 @@ $_SESSION['LAST_ACTIVITY'] = time();
 // Ambil data pengguna dari sesi atau database sesuai kebutuhan
 // Misalnya, jika data pengguna disimpan dalam sesi:
 $user_id = $_SESSION['id'];
-// Ambil informasi pengguna dari database atau sesi sesuai kebutuhan
 
 // Panggil fungsi dbconn() untuk mendapatkan koneksi database
 $conn = dbconn();
@@ -33,6 +32,32 @@ if (!$conn) {
     die("Koneksi database gagal");
 }
 
+// Proses formulir penambahan balance
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $new_balance = $_POST['new_balance'];
+
+    // Validasi input untuk memastikan bahwa nilai adalah desimal 2 digit
+    if (!preg_match('/^\d+(\.\d{1,2})?$/', $new_balance)) {
+        $message = "Error: Invalid input format. Please enter a valid decimal number with up to 2 digits after the decimal point.";
+    } else {
+        // Simpan data top-up balance ke database dengan status "menunggu konfirmasi"
+        $status = "menunggu konfirmasi";
+        $query = "INSERT INTO topup (user_id, amount, status) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $query);
+
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ids", $user_id, $new_balance, $status);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+
+            $message = "Top-up request sent. Waiting for admin confirmation.";
+        } else {
+            $message = "Error: " . mysqli_error($conn);
+        }
+    }
+}
+
+// Ambil informasi pengguna dari database atau sesi sesuai kebutuhan
 $query = "SELECT * FROM users WHERE id = ?";
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $user_id);
@@ -43,14 +68,13 @@ mysqli_stmt_close($stmt);
 mysqli_close($conn);
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Detail</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="./output.css">
     <link rel="stylesheet" href="./assets/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -84,7 +108,12 @@ mysqli_close($conn);
                 <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 w-full mt-2 origin-top-right rounded-md shadow-lg md:w-48">
                     <div class="px-2 py-2 bg-white rounded-md shadow dark-mode:bg-gray-800">
                         <a class="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 md:mt-0 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline" href="detail.php">Detail</a>
-                        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 md:mt-0 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline" href="dashboard.php?logout=true">Log-out</a>
+                        <?php
+                        // Tampilkan tombol log-out jika pengguna telah login
+                        if (isset($_SESSION['id'])) {
+                            echo '<a class="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 md:mt-0 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline" href="dashboard.php?logout=true">Log-out</a>';
+                        }
+                        ?>
                     </div>
                 </div>
             </div>
@@ -92,23 +121,30 @@ mysqli_close($conn);
     </nav>
 
     <div class="flex-grow p-8">
-        <!-- Konten Detail User -->
-        <h1 class="text-3xl font-bold mb-4 text-center text-gray-800">User Detail</h1>
+        <!-- Konten Form Top-up Balance -->
+        <h1 class="text-3xl font-bold mb-4 text-center text-gray-800">Top-up Balance</h1>
         <div class="border border-gray-300 bg-white p-8 rounded shadow-md">
-            <p><strong>Username:</strong> <?php echo $user['username']; ?></p>
-            <p><strong>Password:</strong> <?php echo $user['password']; ?></p>
-            <!-- Tampilkan informasi balance -->
-            <p><strong>Balance:</strong> $<?php echo number_format($user['balance'], 2); ?></p>
+            <?php
+            // Tampilkan pesan sukses atau kesalahan
+            if (!empty($message)) {
+                echo '<div class="mb-4 text-green-600">' . $message . '</div>';
+            }
+            ?>
+            <form action="balance.php" method="post" class="space-y-4">
+                <div class="mb-4">
+                    <label for="new_balance" class="block text-gray-700 text-sm font-bold mb-2">Amount to Top-up:</label>
+                    <input type="number" id="new_balance" name="new_balance" min="0"
+                        class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300"
+                        required step="0.01">
+                </div>
 
-            <!-- Tambahkan tombol Ubah Password -->
-            <a href="password.php" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 mt-4 inline-block">Ubah Password</a>
-            <a href="balance.php" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 mt-4 inline-block">Isi Balance</a>
-            <!-- Tambahkan informasi pengguna lainnya sesuai kebutuhan -->
+                <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
+
+                <button type="submit"
+                    class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 w-full">Submit</button>
+            </form>
         </div>
     </div>
-
-    <!-- Optional: Anda dapat menyertakan script atau stylesheet tambahan di sini -->
-
 </body>
 
 </html>

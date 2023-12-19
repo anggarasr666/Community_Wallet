@@ -2,8 +2,6 @@
 // login.php
 
 require_once 'db_functions.php';
-
-// Mulai sesi
 session_start();
 
 $message = array(); // Menggunakan array untuk menyimpan pesan sukses atau kesalahan
@@ -40,7 +38,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Set session user_id
                 $_SESSION['id'] = $id;
 
-                // Redirect ke dashboard.php
+                // Periksa apakah pengguna adalah admin
+                $admin_query = "SELECT role FROM users WHERE id=?";
+                $admin_stmt = mysqli_prepare($conn, $admin_query);
+                mysqli_stmt_bind_param($admin_stmt, "i", $id);
+                mysqli_stmt_execute($admin_stmt);
+                mysqli_stmt_store_result($admin_stmt);
+
+                if (mysqli_stmt_num_rows($admin_stmt) > 0) {
+                    mysqli_stmt_bind_result($admin_stmt, $user_role);
+                    mysqli_stmt_fetch($admin_stmt);
+
+                    if ($user_role == 'admin') {
+                        $_SESSION['admin'] = true;
+                        header('Location: admin.php');
+                        exit();
+                    }
+                }
+
+                // Redirect ke dashboard.php untuk pengguna biasa
                 header('Location: dashboard.php');
                 exit();
             } else {
