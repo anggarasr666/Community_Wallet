@@ -186,7 +186,7 @@ $result_user_wallets = mysqli_query($conn, $query_user_wallets);
 
             <!-- Sidebar - Bottom Part (9:12) -->
             <div class="bg-blue-600 w-full p-4 shadow" style="flex: 9;">
-                <p>Sidebar - Bottom</p>
+            <label for="angka" class="block text-center text-white text-sm font-bold mb-2">Daftar Wallet</label>
                 <?php
                 // Loop untuk menampilkan wallet yang dimiliki user
                 while ($row_wallet = mysqli_fetch_assoc($result_user_wallets)) {
