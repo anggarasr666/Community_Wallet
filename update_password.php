@@ -45,35 +45,24 @@ $user = mysqli_fetch_assoc($result);
 $old_password_hashed = $user['password'];
 mysqli_stmt_close($stmt);
 
-// Periksa apakah konfirmasi password sesuai dengan password lama (sebelum di-hash)
-if (empty($old_password_plain) || !password_verify($old_password_plain, $old_password_hashed)) {
-    $message = "Konfirmasi password tidak sesuai dengan password lama.";
-    // Redirect ke halaman password.php dengan parameter pesan
-    header("Location: password.php?message=$message");
-    exit();
+$new_password = $_POST['new_password'];
+$confirm_password = $_POST['confirm_password'];
+
+if (!password_verify($old_password_plain, $old_password_hashed)) {
+    $message = "Password Lama tidak sesuai!";
+} else if ($new_password != $confirm_password) {
+    $message = "Password Baru tidak sesuai dengan Password Konfirmasi";
 } else {
-    // Ambil data password baru dan konfirmasi password dari formulir
-    $new_password = $_POST['new_password'];
-    $confirm_password = $_POST['confirm_password'];
+    $hash_password = password_hash($new_password, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+    $stmt->bind_param("si", $hash_password, $user_id);
 
-    // Periksa apakah konfirmasi password sesuai dengan password baru
-    if ($new_password !== $confirm_password) {
-        $message = "Konfirmasi password tidak sesuai dengan password baru.";
-        // Redirect ke halaman password.php dengan parameter pesan
-        header("Location: password.php?message=$message");
-        exit();
+    if ($stmt->execute()) {
+        $message = "Password updated successfully";
     } else {
-        // ... (kode lainnya tetap sama)
-
-        // Pesan berhasil
-        $message = "Password berhasil diubah.";
-        // Redirect ke halaman password.php dengan parameter pesan
-        header("Location: password.php?message=$message");
-        exit();
+        $message = "Error updating Password: " . $stmt->error;
     }
 }
 
-// Redirect ke halaman detail setelah mengubah password
-header("Location: password.php");
+header("Location: password.php?message=$message");
 exit();
-?>

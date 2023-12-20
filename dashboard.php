@@ -18,13 +18,13 @@ if (isset($_SESSION['id'])) {
     $user_id = $_SESSION['id'];
 
     // Perbarui waktu timeout
-    if (isset($_SESSION['LAST_ACTIVITY']) && time() - $_SESSION['LAST_ACTIVITY'] > 60) {
-        // Jika lebih dari 1 menit sejak aktivitas terakhir
-        session_unset();     // Unset $_SESSION variable
-        session_destroy();   // Hapus sesi
-        header("Location: login.php");
-        exit();
-    }
+    // if (isset($_SESSION['LAST_ACTIVITY']) && time() - $_SESSION['LAST_ACTIVITY'] > 60) {
+    //     // Jika lebih dari 1 menit sejak aktivitas terakhir
+    //     session_unset();     // Unset $_SESSION variable
+    //     session_destroy();   // Hapus sesi
+    //     header("Location: login.php");
+    //     exit();
+    // }
 
     // Perbarui waktu aktivitas terakhir
     $_SESSION['LAST_ACTIVITY'] = time();
@@ -48,7 +48,8 @@ if (isset($_SESSION['id'])) {
 }
 
 // Fungsi untuk menambahkan user ke dalam sebuah wallet
-function joinWallet($conn, $user_id, $wallet_id) {
+function joinWallet($conn, $user_id, $wallet_id)
+{
     // Periksa apakah user sudah menjadi member dalam wallet tersebut
     $query_check_member = "SELECT * FROM wallet_members WHERE wallet_id = $wallet_id AND user_id = $user_id";
     $result_check_member = mysqli_query($conn, $query_check_member);
@@ -114,59 +115,122 @@ $result_user_wallets = mysqli_query($conn, $query_user_wallets);
     <script src="./assets/js/script.js"></script>
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+    <script>
+        let userId = <?= $user_id ?>;
+
+        function openWallet(id) {
+            $.get("wallet.php", {
+                id: id
+            }, (data) => {
+                let main = $('div#main-content')[0];
+                let wallet = JSON.parse(data);
+                let walletData = wallet["wallet"];
+                let walletMember = wallet["members"];
+                htmlMember = walletMember.map((d) => `<div class="mb-4">
+                            <label class="block text-gray-600 text-sm font-semibold mb-2">Member:</label>
+                            <p class="text-gray-800 text-lg">${ d['username'] }</p> 
+                            ${ (userId == walletData["creator_id"] && d['id'] != userId) ? `<button class="px-2 button bg-red-400 rounded-md " onclick="kick('${d['wallet_id']}','${d['id']}')">kick!</button>` : '' }
+                            </div>`).join("\n");
+
+                console.log(walletData);
+                main.innerHTML = `
+                    <div class="bg-gray-100 h-full flex flex-col gap-5 items-center justify-center">
+        
+                    <div class='flex flex-row gap-3'>
+                        <div class="bg-white p-8 rounded shadow-md w-96">
+                            <h1 class="text-2xl font-semibold mb-4">Wallet Details</h1>
+
+                            <!-- Wallet Data -->
+                            <div class="mb-4">
+                                <label class="block text-gray-600 text-sm font-semibold mb-2">ID:</label>
+                                <p class="text-gray-800 text-lg">${ walletData['id'] }</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-600 text-sm font-semibold mb-2">Creator:</label>
+                                <p class="text-gray-800 text-lg">${ walletData['username'] }</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-600 text-sm font-semibold mb-2">Wallet Name:</label>
+                                <p class="text-gray-800 text-lg">${ walletData['wallet_name'] }</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-600 text-sm font-semibold mb-2">Balance:</label>
+                                <p class="text-gray-800 text-lg">${ walletData['balance'] }</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-600 text-sm font-semibold mb-2">Goal Balance:</label>
+                                <p class="text-gray-800 text-lg">${ walletData['goal_balance'] }</p>
+                            </div>
+
+                        </div>
+                        <div class="bg-white p-8 rounded shadow-md w-96 overflow-x-auto">
+                            <h1 class="text-2xl font-semibold mb-4">Members</h1>
+                            ${htmlMember}
+
+                        </div>
+                    </div>
+                    <div class="flex flex-row gap-3">
+                            ${ (userId == walletData["creator_id"]) ? `<a href="edit_wallet.php?wallet_id=${walletData["id"]}" class="button bg-blue-500 px-10 py-3 rounded-lg text-lg font-bold text-white"> Edit </a>` : '' }
+                        <button class="button bg-green-500 px-10 py-3 rounded-lg text-lg font-bold text-white" onclick="document.querySelector('div#donate-container').style.display = 'flex'"> Donate </button>
+                    </div>
+                    <div class="hidden" id="donate-container">
+                        <form id="donate-form">
+                            <div class="mb-4">
+                                <label for="balance" class="block text-gray-700 text-sm font-bold mb-2">Amount to Top-up:</label>
+                                <input type="number" id="balance" name="balance" min="0"
+                                    class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300"
+                                    required step="0.01">
+                            </div>
+                            <input type="hidden" name="wallet_id" value="${walletData['id']}">
+                            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 w-full">Submit</button>
+                        </form>
+                    </div>
+                </div>  `;
+                $("#donate-form").submit(function(event) {
+                    event.preventDefault();
+
+                    var formData = $(this).serialize();
+
+                    // Make an AJAX request to submit the form data
+                    $.ajax({
+                        type: "POST",
+                        url: "donate_wallet.php",
+                        data: formData,
+                        success: function(response) {
+                            openWallet(id);
+                            toasts.push({
+                                title: 'Berhasil Donasi',
+                                content: response,
+                                style: 'success'
+                            });
+                        },
+                        error: function(error) {
+                            console.error("Error submitting form:", error);
+                            toasts.push({
+                                title: "Error submitting form: " + error,
+                                content: 'My notification description.',
+                                style: 'Error'
+                            });
+                        }
+                    });
+                });
+
+            })
+        }
+    </script>
 </head>
 
 <body class="bg-gradient-to-br from-purple-800 to-blue-600 flex flex-col h-screen">
 
     <!-- Navbar -->
-    <nav class="bg-gray-800 p-4 text-white flex justify-between items-center">
-        <div class="flex items-center">
-            <div class="mr-4">
-                <span class="text-lg font-bold">PUPUAN</span>
-            </div>
-        </div>
+    <?php include('navbar.php'); ?>
 
-        <div class="flex items-center flex-grow">
-            <a href="contact.php" class="text-white hover:text-gray-300">Contact</a>
-        </div>
-
-        <div class="flex items-center">
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open"
-                    class="flex flex-row items-center px-4 py-2 mt-2 text-sm font-semibold text-left bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:focus:bg-gray-600 dark-mode:hover:bg-gray-600 md:w-auto md:inline md:mt-0 md:ml-4 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline cursor-pointer">
-                    <span>Account</span>
-                    <svg fill="currentColor" viewBox="0 0 20 20"
-                        :class="{'rotate-180': open, 'rotate-0': !open}"
-                        class="inline w-4 h-4 mt-1 ml-1 transition-transform duration-200 transform md:-mt-1">
-                        <path fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-                <div x-show="open" @click.away="open = false"
-                    x-transition:enter="transition ease-out duration-100"
-                    x-transition:enter-start="transform opacity-0 scale-95"
-                    x-transition:enter-end="transform opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-75"
-                    x-transition:leave-start="transform opacity-100 scale-100"
-                    x-transition:leave-end="transform opacity-0 scale-95"
-                    class="absolute right-0 w-full mt-2 origin-top-right rounded-md shadow-lg md:w-48">
-                    <div class="px-2 py-2 bg-white rounded-md shadow dark-mode:bg-gray-800">
-                        <a class="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 md:mt-0 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline"
-                            href="detail.php">Detail</a>
-                        <?php
-                        // Tampilkan tombol log-out jika pengguna telah login
-                        if (isset($_SESSION['id'])) {
-                            echo '<a class="block px-4 py-2 mt-2 text-sm font-semibold text-gray-900 bg-transparent rounded-lg dark-mode:bg-transparent dark-mode:hover:bg-gray-600 dark-mode:focus:bg-gray-600 dark-mode:focus:text-white dark-mode:hover:text-white dark-mode:text-gray-200 md:mt-0 hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:shadow-outline" href="dashboard.php?logout=true">Log-out</a>';
-                        }
-                        ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-  <!-- Grid Layout -->
-  <div class="flex flex-grow">
+    <!-- Grid Layout -->
+    <div class="flex flex-grow">
         <!-- Sidebar -->
         <div class="bg-white w-1/4 p-4 shadow flex flex-col">
             <div class="bg-blue-300 w-full p-4 shadow mb-4" style="flex: 3;">
@@ -186,7 +250,7 @@ $result_user_wallets = mysqli_query($conn, $query_user_wallets);
 
             <!-- Sidebar - Bottom Part (9:12) -->
             <div class="bg-blue-600 w-full p-4 shadow" style="flex: 9;">
-            <label for="angka" class="block text-center text-white text-sm font-bold mb-2">Daftar Wallet</label>
+                <label for="angka" class="block text-center text-white text-sm font-bold mb-2">Daftar Wallet</label>
                 <?php
                 // Loop untuk menampilkan wallet yang dimiliki user
                 while ($row_wallet = mysqli_fetch_assoc($result_user_wallets)) {
@@ -201,21 +265,9 @@ $result_user_wallets = mysqli_query($conn, $query_user_wallets);
                     $row_creator = mysqli_fetch_assoc($result_creator);
                     $creator_name = $row_creator["username"];
 
-                    // Query untuk mendapatkan member wallet
-                    $query_members = "SELECT u.username FROM users u
-                                      JOIN wallet_members wm ON u.id = wm.user_id
-                                      WHERE wm.wallet_id = $wallet_id";
-                    $result_members = mysqli_query($conn, $query_members);
-
                     echo '<div class="mb-4">';
-                    echo '<button class="bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-100 focus:outline-none transition duration-300 w-full">';
-                    echo "Wallet: $wallet_name (Creator: $creator_name)";
-                    
-                    // Menampilkan daftar member wallet
-                    while ($row_member = mysqli_fetch_assoc($result_members)) {
-                        $member_name = $row_member["username"];
-                        echo "<br>- Member: $member_name";
-                    }
+                    echo '<button class="bg-white text-blue-500 py-2 px-4 rounded hover:bg-blue-100 focus:outline-none transition duration-300 w-full font-bold text-xl" onclick="openWallet(' . $wallet_id . ')">';
+                    echo "$wallet_name";
 
                     echo '</button>';
                     echo '</div>';
@@ -224,10 +276,9 @@ $result_user_wallets = mysqli_query($conn, $query_user_wallets);
             </div>
         </div>
 
+
         <!-- Content Layout -->
-        <div class="bg-white w-3/4 p-4 shadow">
-            <!-- Isi dengan konten yang sesuai -->
-            <p>Main Content</p>
+        <div class="bg-white w-3/4 p-4 shadow" id="main-content">
         </div>
     </div>
 </body>

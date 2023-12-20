@@ -6,6 +6,10 @@ session_start();
 
 $message = array(); // Menggunakan array untuk menyimpan pesan sukses atau kesalahan
 
+if (isset($_SESSION['id'])) {
+    header('Location: dashboard.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -83,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -96,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="./assets/js/script.js"></script>
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
 </head>
+
 <body class="bg-gradient-to-br from-purple-800 to-blue-600 flex items-center justify-center h-screen">
 
     <div class="border border-gray-300 bg-white p-8 rounded shadow-md w-96 animate__animated animate__fadeInDown">
@@ -110,24 +116,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form action="login.php" method="post" class="space-y-4">
             <div class="mb-4">
                 <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
-                <input type="text" id="username" name="username"
-                    class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300"
-                    required>
+                <input type="text" id="username" name="username" class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300" required>
             </div>
 
             <div class="mb-4">
                 <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
-                <input type="password" id="password" name="password"
-                    class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300"
-                    required>
+                <input type="password" id="password" name="password" class="border rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500 transition duration-300" required>
             </div>
 
-            <button type="submit"
-                class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 w-full">Login</button>
+            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none transition duration-300 w-full">Login</button>
 
-                <div class="text-center mt-4">
-                    <p class="text-sm">Don't have an account? <a href="register.php" class="text-blue-500">Register here</a></p>
-                </div>
+            <div class="text-center mt-4">
+                <p class="text-sm">Don't have an account? <a href="register.php" class="text-blue-500">Register here</a></p>
+            </div>
         </form>
     </div>
     <script>
@@ -137,7 +138,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 
 </body>
+
 </html>
-
-
-
