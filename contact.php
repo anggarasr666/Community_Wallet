@@ -3,6 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact</title>
+    <link rel="stylesheet" href="./output.css">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="./assets/js/script.js"></script>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>    
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Porto - Tailwind Template</title>
@@ -140,6 +151,14 @@
         </div>
 
     </div>
+    <footer class="py-10 md:py-16 bg-gray-900 text-gray-50 text-center">
+        <div class="container max-w-screen-xl mx-auto px-4">
+            <p class="text-sm md:text-lg">
+                Kuliah Pemrograman Web Jurusan Teknik Informatika ITS (2023).
+                <br>Dosen: Imam Kuswardayan, S.Kom, M.T.
+            </p>
+        </div>
+    </footer>
 </body>
 
 </html>

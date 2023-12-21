@@ -96,10 +96,11 @@ mysqli_close($conn);
     </script>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-purple-800 to-blue-600 flex flex-col h-screen">
 
     <?php include('navbar.php'); ?>
-    <div class="bg-white p-8 rounded shadow-md w-full sm:w-96">
+    <div class="w-full flex items-center justify-center mt-20">
+    <div class="bg-white p-8 rounded shadow-md w-full sm:w-96 mt-8">
         <h2 class="text-2xl font-bold mb-6">Edit Wallet</h2>
 
         <form method="post">
@@ -117,6 +118,7 @@ mysqli_close($conn);
                 Update Wallet
             </button>
         </form>
+    </div>
     </div>
 
 </body>
